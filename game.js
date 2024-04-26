@@ -1,14 +1,27 @@
-let dimX = 5; // The initial board size is dimX x dimY
-let dimY = 5; //
-const winLength = 5; // How many stones needed to win
-const board = []; // The game board
-let turn = "X"; // Starting player. The other player is 'O'.
+const winnerAnnouncement = document.querySelector(".overlay");
+const winner = document.querySelector("#winner");
+const newgameBtn = document.querySelector("#newgame");
+
+let dimensionX = 5;
+let dimensionY = 5;
+const winLength = 5;
+const board = [];
+let turn = "X";
+let isGameOver = false;
 
 function initializeGame() {
   // TODO: Task 1
   // Initialize the game board to be an array of five arrays.
   // Each of the inner arrays should contain five empty strings.
-  // Use the variables dimX and dimY instead of hard coding the number five.
+  // Use the variable dimensions instead of hard coding the number five.
+
+  for (let i = 0; i < dimensionY; i++) {
+    let row = [];
+    for (let j = 0; j < dimensionX; j++) {
+      row.push("");
+    }
+    board.push(row);
+  }
 }
 
 function nextTurn() {
@@ -28,14 +41,90 @@ function checkWin(x, y) {
   // If any of them contain same character as the current turn,
   // keep on checking to that direction -- and to the opposite!
   // Number of the stones needed is in variable winLength.
+
+  x = parseInt(x);
+  y = parseInt(y);
+
+  const character = turn;
+
+  const onboard = (x, y) => {
+    if (x < 0 || x >= dimensionX || y < 0 || y >= dimensionY) {
+      return false;
+    } else {
+      return true;
+    }
+  };
+
+  const countChar = (x, y, dx, dy) => {
+    let counter = -1;
+
+    let i = x;
+    let j = y;
+    while (onboard(i, j) && board[j][i] === character) {
+      i = i + dx;
+      j = j + dy;
+      counter++;
+    }
+
+    i = x;
+    j = y;
+    while (onboard(i, j) && board[j][i] === character) {
+      i = i + dx * -1;
+      j = j + dy * -1;
+      counter++;
+    }
+
+    if (counter === winLength) {
+      winnerAnnouncement.classList.remove("hidden");
+      winner.textContent = character;
+
+      isGameOver = true;
+
+      newgameBtn.addEventListener("click", () => {
+        location.reload();
+      });
+    }
+  };
+
+  countChar(x, y, 1, 0);
+  countChar(x, y, 0, 1);
+  countChar(x, y, 1, 1);
+  countChar(x, y, -1, 1);
 }
 
 function expandBoard(direction) {
   // TODO: Task 2 B
   // This function adds a column or a row to the board
   // depending on the direction it gets as an argument.
+  if (direction === "LEFT") {
+    dimensionX++;
+    board.forEach((row) => {
+      row.unshift("");
+    });
+  } else if (direction === "RIGHT") {
+    dimensionX++;
+    board.forEach((row) => {
+      row.push("");
+    });
+  }
 
-  drawBoard();
+  if (direction === "UP") {
+    dimensionY++;
+    let row = [];
+    for (let i = 0; i < dimensionX; i++) {
+      row.push("");
+    }
+    board.unshift(row);
+  } else if (direction === "DOWN") {
+    dimensionY++;
+    let row = [];
+    for (let i = 0; i < dimensionX; i++) {
+      row.push("");
+    }
+    board.push(row);
+  }
+
+  drawBoard(isGameOver);
 }
 
 function handleClick(event) {
@@ -43,31 +132,32 @@ function handleClick(event) {
   let x = square.dataset.x;
   let y = square.dataset.y;
 
-  board[y][x] = turn;
-  square.textContent = turn;
-  square.removeEventListener("click", handleClick);
+  if (!isGameOver) {
+    board[y][x] = turn;
+    square.textContent = turn;
+    square.removeEventListener("click", handleClick);
+  }
 
   checkWin(x, y);
 
   // TODO: Task 2 A
   // Implement the conditions when the board should be expanded.
   // Ie when the player clicks the extreme rows or columns.
-  /* 
-    if ( ) {
-        expandBoard('LEFT');
-    }
-    else if ( ) {
-        expandBoard('RIGHT');
-    }
-    if ( ) {
-        expandBoard('UP');
-    }
-    else if ( ) {
-        expandBoard('DOWN');
-    }
-    */
 
-  nextTurn();
+  if (x == 0) {
+    expandBoard("LEFT");
+  } else if (x == dimensionX - 1) {
+    expandBoard("RIGHT");
+  }
+  if (y == 0) {
+    expandBoard("UP");
+  } else if (y == dimensionY - 1) {
+    expandBoard("DOWN");
+  }
+
+  if (!isGameOver) {
+    nextTurn();
+  }
 }
 
 function createSquare(boardDiv, x, y) {
@@ -84,16 +174,23 @@ function createSquare(boardDiv, x, y) {
   boardDiv.appendChild(element);
 }
 
-function drawBoard() {
-  const boardDiv = document.getElementById("board");
-  boardDiv.innerHTML = ""; // Clear the board first!
+function drawBoard(gamestate) {
+  if (gamestate) {
+    return;
+  }
 
-  for (let y = 0; y < dimY; y++) {
-    for (let x = 0; x < dimX; x++) {
+  const boardDiv = document.getElementById("board");
+  boardDiv.innerHTML = "";
+
+  boardDiv.style.gridTemplateRows = `repeat(${dimensionY}, 1fr)`;
+  boardDiv.style.gridTemplateColumns = `repeat(${dimensionX}, 1fr)`;
+
+  for (let y = 0; y < dimensionY; y++) {
+    for (let x = 0; x < dimensionX; x++) {
       createSquare(boardDiv, x, y);
     }
   }
 }
 
 initializeGame();
-drawBoard();
+drawBoard(isGameOver);
