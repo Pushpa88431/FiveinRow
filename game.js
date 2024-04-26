@@ -149,6 +149,7 @@ function handleClick(event) {
   } else if (x == dimensionX - 1) {
     expandBoard("RIGHT");
   }
+
   if (y == 0) {
     expandBoard("UP");
   } else if (y == dimensionY - 1) {
